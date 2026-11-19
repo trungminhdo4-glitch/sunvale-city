@@ -83,6 +83,7 @@ export class AudioEngine {
   thud() { this.tone(90, 0.15, { gain: 0.4, slide: 0.5 }); this.burst({ dur: 0.08, freq: 500, gain: 0.3 }); }
   whoosh() { this.burst({ dur: 0.15, freq: 900, type: 'bandpass', gain: 0.25, q: 2 }); }
   click() { this.tone(1800, 0.03, { type: 'square', gain: 0.06 }); }
+  radioBlip() { this.burst({ dur: 0.09, freq: 2400, type: 'bandpass', gain: 0.18, q: 3 }); this.tone(1250, 0.07, { type: 'square', gain: 0.05, when: 0.06 }); }
   door() { this.burst({ dur: 0.12, freq: 400, gain: 0.35 }); this.tone(140, 0.1, { gain: 0.2 }); }
   pickup() { this.tone(880, 0.12, { gain: 0.2 }); this.tone(1320, 0.2, { gain: 0.2, when: 0.08 }); }
   wantedUp() { this.tone(660, 0.1, { type: 'square', gain: 0.08 }); this.tone(520, 0.14, { type: 'square', gain: 0.08, when: 0.1 }); }

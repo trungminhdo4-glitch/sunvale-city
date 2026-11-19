@@ -98,6 +98,7 @@ export class PickupSystem {
         this.collectedTokens.add(it.id);
         w.state.money += 250;
         w.hud.notify(`Sun Token ${this.tokenCount}/${this.tokenTotal} found  +$250`);
+        w.progress?.earn('token');
         if (this.tokenCount === this.tokenTotal) { w.state.money += 10000; w.hud.banner('ALL SUN TOKENS', 'passed', '+$10,000'); }
         w.save?.();
         break;
@@ -107,8 +108,8 @@ export class PickupSystem {
         w.hud.notify('Health restored');
         break;
       case 'armor':
-        if (pl.armor >= 100) return false;
-        pl.armor = 100;
+        if (pl.armor >= (w.progress?.armorCap ?? 100)) return false;
+        pl.armor = w.progress?.armorCap ?? 100;
         w.hud.notify('Body armour');
         break;
       case 'ammo': {

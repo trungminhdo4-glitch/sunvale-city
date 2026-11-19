@@ -17,6 +17,8 @@ import { PoliceSystem } from '../systems/policeSystem.js';
 import { CombatSystem } from '../systems/combatSystem.js';
 import { MissionSystem } from '../systems/missionSystem.js';
 import { PickupSystem } from '../systems/pickupSystem.js';
+import { ProgressionSystem } from '../systems/progressionSystem.js';
+import { DispatchRadio } from '../systems/dispatchRadio.js';
 import { Effects } from '../fx/effects.js';
 import { AudioEngine } from '../audio/audioEngine.js';
 import { Radio } from '../audio/radio.js';
@@ -61,6 +63,8 @@ export class Game {
     this.combat = new CombatSystem(this);
     this.missions = new MissionSystem(this);
     this.pickups = new PickupSystem(this);
+    this.progress = new ProgressionSystem(this);
+    this.dispatch = new DispatchRadio(this);
     this.hud = new Hud();
     this.minimap = new Minimap(document.getElementById('minimap'), this.plan);
 
@@ -78,6 +82,7 @@ export class Game {
     this.peds.spawnFleeing(p.x, p.z, v.pos);
     this.wanted.report(prev === 'cop' ? 'copCar' : 'carjack', p.x, p.z);
     this.state.stats.carsStolen++;
+    this.progress.earn('carjack');
   }
 
   onNpcKilled(n, from) {
@@ -85,20 +90,24 @@ export class Game {
     if (byPlayer) {
       if (n.role === 'cop') this.wanted.report('killCop', n.pos.x, n.pos.z);
       else if (n.role === 'civ') this.wanted.report('killCiv', n.pos.x, n.pos.z);
+      if (n.role === 'thug' || n.role === 'cop') this.progress.earn(n.role);
     }
     if (n.role !== 'civ' || rng.chance(0.4)) this.pickups.dropCash(n.pos.x, n.pos.z, n.role === 'thug' ? rng.int(60, 180) : rng.int(10, 60));
   }
 
   onVehicleDestroyed(v) {
     this.combat.explode(v);
-    if (Math.hypot(v.pos.x - this.player.pos.x, v.pos.z - this.player.pos.z) < 45) this.wanted.report(v.police ? 'copCar' : 'wreck', v.pos.x, v.pos.z);
+    if (Math.hypot(v.pos.x - this.player.pos.x, v.pos.z - this.player.pos.z) < 45) {
+      this.wanted.report(v.police ? 'copCar' : 'wreck', v.pos.x, v.pos.z);
+      if (v.police) this.progress.earn('wreck');
+    }
   }
 
   onPlayerCrash(other, strength) {
     if (other.police && strength > 6) this.wanted.report('assault', other.pos.x, other.pos.z);
   }
 
-  onWantedCleared() { this.state.stats.escapes++; }
+  onWantedCleared(peak = 1) { this.state.stats.escapes++; this.progress.earn('escape', peak); }
 
   onPlayerDown(kind) {
     if (this.mode === 'down') return;
@@ -176,7 +185,7 @@ export class Game {
         const v = pl.findCar(this.vehicles);
         if (v) {
           if (!v.driver && !v.mission && !v.police) this.wanted.report('steal', pl.pos.x, pl.pos.z);
-          if (!v.driver) this.state.stats.carsStolen++;
+          if (!v.driver && !v.mission) { this.state.stats.carsStolen++; this.progress.earn('steal'); }
           pl.enterCar(v, this);
           this.camera.snapBehind(v.heading);
           this.hud.showRadio(this.radio.name);
@@ -211,6 +220,8 @@ export class Game {
     this.peds.update(dt);
     this.missions.update(dt);
     this.pickups.update(dt);
+    this.progress.update(dt);
+    this.dispatch.update(dt);
     this.landmarks.update(dt);
 
     const car = pl.vehicle;

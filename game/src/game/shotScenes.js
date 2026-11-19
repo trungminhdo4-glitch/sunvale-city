@@ -7,14 +7,20 @@ import { Vehicle } from '../actors/vehicle.js';
 
 const DT = 1 / 30;
 
-function startMission(game, id, stepIndex) {
+/** Starts a mission at a step; the step's own call-in line plays unless the radio should talk. */
+function startMission(game, id, stepIndex, stepLine = true) {
   const m = MISSIONS.find((q) => q.id === id);
   const ms = game.missions;
+  for (const q of MISSIONS.slice(0, MISSIONS.indexOf(m))) ms.completed.add(q.id);
   ms.start(m);
   while (ms.stepIndex < stepIndex) ms.nextStep();
   ms.lines = [];
+  if (stepLine && ms.step?.say) ms.say(ms.step.say);
   return ms;
 }
+
+/** Earned respect for a scene set later in the story. */
+function setRespect(game, rp) { game.progress.rp = rp; game.progress.popup = null; game.progress.rankUpIn = 0; }
 
 function simulate(game, frames, each) {
   for (let k = 0; k < frames; k++) {
@@ -54,7 +60,9 @@ const SCENES = {
   /** Cover: sunset chase on Shoreline Boulevard, four stars, helicopter, mission target ahead. */
   chase(game) {
     game.stage.setHour(17.75);
-    const ms = startMission(game, 'sunsetrun', 1);
+    const ms = startMission(game, 'sunsetrun', 1, false);
+    setRespect(game, 4280);
+    game.player.armor = 55; game.player.health = 86;
     const tgt = ms.entities.target;
     const g = game.lanes;
     tgt.ai.a = g.id(4, 9); tgt.ai.b = g.id(5, 9); tgt.ai.curve = g.laneStraight(tgt.ai.a, tgt.ai.b); tgt.ai.s = 20; tgt.ai.turning = false;
@@ -79,37 +87,51 @@ const SCENES = {
     const p = car.pos;
     game.police.heli.pos.set(p.x - 26, 15, p.z - 9);
     game.police.updateHeli(0.0001, 4);
-    game.camera.setCinematic(p.x + 11, 4.0, 292.8, p.x - 20, 1.4, p.z - 3, 54);
+    game.camera.setCinematic(p.x + 11.5, 3.7, 292.2, p.x - 20, 1.6, p.z - 0.8, 56);
   },
 
   /** On foot in the harbour container yard: "Dock Rats" shootout with Crane's crew. */
   shootout(game) {
     game.stage.setHour(16.9);
     const ms = startMission(game, 'dockrats', 1);
+    setRespect(game, 1620);
     const pl = game.player;
-    pl.placeAt(314, -130, Math.PI / 2);
+    pl.placeAt(296, -138, 2.03);
     game.combat.give('smg', 120);
     game.combat.select(2);
     game.state.money = 9640;
     pl.armor = 60;
     const thugs = ms.entities.thugs;
     for (const k of [2, 5]) { thugs[k].health = 0; thugs[k].die(game, 'x'); }
+    // the four still standing are spread across the lane ahead (d metres out, s to the side)
+    const fx0 = Math.sin(2.03), fz0 = Math.cos(2.03), at = (d, s) => [pl.pos.x + fx0 * d - fz0 * s, pl.pos.z + fz0 * d + fx0 * s];
+    [[15, 3], [23, 9], [30, 2], [27, 15]].forEach(([d, s], i) => { const n = thugs[[0, 1, 3, 4][i]]; const [x, z] = at(d, s); n.pos.set(x, 0, z); });
+    const [cx, cz] = at(11, 1.5);
+    const wreck = placeCar(game, 'ridgeback', 0x3d5a80, cx, cz, 2.03 + 1.3);
+    wreck.health = wreck.spec.health * 0.18;
     game.wanted.setLevel(1);
-    game.camera.yaw = Math.PI / 2 + 0.1; game.camera.pitch = 0.05; game.camera.idle = 0;
+    game.wanted.report('shooting', pl.pos.x, pl.pos.z);
+    game.camera.yaw = 2.03; game.camera.pitch = 0.05; game.camera.idle = 0;
     simulate(game, 36, () => { pl.aiming = true; pl.heading = game.camera.yaw; pl.model.gun.visible = true; });
     pl.aiming = true;
     pl.health = 74;
+    pl.hurtFlash = 0;
     game.combat.cooldown = 0;
     game.combat.fire(game.combat.weapon);
     thugs[1].fireCooldown = 0;
     game.update(DT * 0.3);
-    game.camera.setCinematic(pl.pos.x - 7, 2.7, pl.pos.z + 5.5, pl.pos.x + 30, 4.5, pl.pos.z - 9, 60);
+    // over the right shoulder, looking down the line of containers at the crew
+    const fx = Math.sin(2.03), fz = Math.cos(2.03);
+    game.camera.setCinematic(pl.pos.x - fx * 6 - fz * 1.6, 2.9, pl.pos.z - fz * 6 + fx * 1.6, pl.pos.x + fx * 40, 3.2, pl.pos.z + fz * 40, 62);
   },
 
   /** Coastline Sprint: racing the Brute 77 toward the pier and its wheel. */
   race(game) {
     game.stage.setHour(17.55);
     const ms = startMission(game, 'streetrace', 1);
+    setRespect(game, 2930);
+    game.combat.give('smg', 120); game.combat.give('shotgun', 18); game.combat.select(1);
+    game.player.armor = 80;
     ms.entities.points[0].done = true;
     const car = ms.entities.car;
     car.pos.set(-99.3, 0, 226); car.heading = 0.02; car.vz = 34; car.speed = 34;
@@ -127,6 +149,7 @@ const SCENES = {
   street(game) {
     game.stage.setHour(17.1);
     for (const id of ['homecoming', 'borrowed']) game.missions.completed.add(id);
+    setRespect(game, 760);
     game.combat.give('smg', 70);
     game.state.money = 4380;
     const pl = game.player;

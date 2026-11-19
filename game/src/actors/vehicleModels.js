@@ -54,6 +54,64 @@ function mesh(g, m, x, y, z, parent) {
   return o;
 }
 
+// How far the hood and the boot drop from the waistline, per model (sporty noses drop most).
+const PROFILE = {
+  pico: [0.24, 0.2], cortessa: [0.18, 0.14], mirage: [0.3, 0.12], brute: [0.1, 0.08],
+  ridgeback: [0.12, 0.04], pelican: [0.16, 0.04], sunnycab: [0.18, 0.14], cruiser: [0.18, 0.12],
+};
+const bodyGeoCache = new Map();
+
+/** Bevel, half length, waist height and the heights of the nose and tail edges. */
+function profileHeights(type, L, H) {
+  const [nose, tail] = PROFILE[type] ?? [0.18, 0.12];
+  const b = 0.07, l = L / 2 - b, h = H - b;
+  return { b, l, h, front: Math.max(h * 0.5, h - nose), back: Math.max(h * 0.6, h - tail) };
+}
+
+/**
+ * The lower body as an extruded side profile: a rounded nose, a hood that falls to the bumper,
+ * a rounded boot and bevelled edges all round. Faces +z, sits on y = 0, centred on x.
+ */
+function bodyGeometry(type, L, W, H) {
+  if (bodyGeoCache.has(type)) return bodyGeoCache.get(type);
+  const { b, l, h, front, back } = profileHeights(type, L, H);
+  const s = new THREE.Shape();
+  s.moveTo(-l + 0.1, 0.04);
+  s.lineTo(l - 0.14, 0.04);
+  s.quadraticCurveTo(l, 0.04, l, h * 0.25);
+  s.lineTo(l, front);
+  s.quadraticCurveTo(l - 0.12, h, l - 0.85, h);
+  s.lineTo(-l + 0.5, h);
+  s.quadraticCurveTo(-l, h, -l, back);
+  s.lineTo(-l, h * 0.25);
+  s.quadraticCurveTo(-l, 0.04, -l + 0.1, 0.04);
+  const depth = W - b * 2;
+  const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 2, curveSegments: 5 });
+  g.rotateY(-Math.PI / 2);
+  g.translate(depth / 2, 0, 0);
+  g.computeVertexNormals();
+  bodyGeoCache.set(type, g);
+  return g;
+}
+
+let policeDecal = null;
+/** "SVPD" door decal with the city's sun badge, painted once on a canvas. */
+function policeDecalMaterial() {
+  if (policeDecal) return policeDecal;
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 64;
+  const g = c.getContext('2d');
+  g.fillStyle = '#f5f5f5'; g.fillRect(0, 0, 256, 64);
+  g.fillStyle = '#ffb000'; g.beginPath(); g.arc(34, 32, 22, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#1a2a5a'; g.beginPath(); g.arc(34, 32, 14, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#1a2a5a'; g.font = '900 38px Arial Black, Arial, sans-serif'; g.textBaseline = 'middle';
+  g.fillText('SVPD', 66, 34);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  policeDecal = new THREE.MeshLambertMaterial({ map: tex });
+  return policeDecal;
+}
+
 /** Builds a vehicle group facing +z. Returns the parts the Vehicle animates. */
 export function createVehicleModel(type, color) {
   const t = VEHICLE_TYPES[type];
@@ -63,8 +121,8 @@ export function createVehicleModel(type, color) {
   const L = t.len, W = t.wid, H = t.hgt;
   const base = 0.38;
   const bodyMat = paint(color);
-  mesh(new THREE.BoxGeometry(W, H, L), bodyMat, 0, base + H / 2, 0, body);
-  mesh(new THREE.BoxGeometry(W + 0.04, 0.16, L + 0.1), trimMat, 0, base + 0.08, 0, body);
+  mesh(bodyGeometry(type, L, W, H), bodyMat, 0, base, 0, body);
+  mesh(new THREE.BoxGeometry(W - 0.04, 0.2, L - 0.3), trimMat, 0, base + 0.06, 0, body);
   // cabin: glass box with a painted roof
   const [ch, cl, cz] = t.cab;
   if (t.cab) {
@@ -96,7 +154,13 @@ export function createVehicleModel(type, color) {
   }
   let lightbar = null;
   if (t.police) {
-    mesh(new THREE.BoxGeometry(W + 0.02, H * 0.5, L * 0.55), paint(0x1a2a5a), 0, base + H * 0.45, 0, body);
+    // two-tone livery: navy doors with the SVPD decal, navy hood stripe
+    mesh(new THREE.BoxGeometry(W + 0.03, H * 0.62, L * 0.42), paint(0x1a2a5a), 0, base + H * 0.42, -0.05, body);
+    for (const sx of [1, -1]) {
+      const d = mesh(new THREE.PlaneGeometry(1.5, 0.375), policeDecalMaterial(), sx * (W / 2 + 0.02), base + H * 0.5, -0.05, body);
+      d.rotation.y = sx * Math.PI / 2;
+      d.castShadow = false;
+    }
     const red = new THREE.MeshBasicMaterial({ color: 0xff2a2a });
     const blue = new THREE.MeshBasicMaterial({ color: 0x2a6bff });
     const y = base + H + ch + 0.14;
@@ -118,11 +182,14 @@ export function createVehicleModel(type, color) {
   // lights
   const headMat = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
   const tailMat = new THREE.MeshBasicMaterial({ color: 0x9a1010 });
+  const ph = profileHeights(type, L, H);
   for (const s of [-1, 1]) {
-    mesh(new THREE.BoxGeometry(0.42, 0.16, 0.06), headMat, s * (W / 2 - 0.3), base + H * 0.7, L / 2 + 0.01, body);
-    mesh(new THREE.BoxGeometry(0.42, 0.14, 0.06), tailMat, s * (W / 2 - 0.3), base + H * 0.7, -L / 2 - 0.01, body);
+    mesh(new THREE.BoxGeometry(0.44, 0.13, 0.08), headMat, s * (W / 2 - 0.32), base + ph.front * 0.8, L / 2 - 0.01, body);
+    mesh(new THREE.BoxGeometry(0.46, 0.12, 0.08), tailMat, s * (W / 2 - 0.3), base + ph.back * 0.82, -L / 2 + 0.01, body);
   }
-  mesh(new THREE.BoxGeometry(W * 0.5, 0.2, 0.05), chromeMat, 0, base + H * 0.4, L / 2 + 0.02, body);
+  mesh(new THREE.BoxGeometry(W * 0.42, ph.front * 0.38, 0.06), trimMat, 0, base + ph.front * 0.5, L / 2 + 0.0, body);
+  mesh(new THREE.BoxGeometry(W * 0.96, 0.1, 0.1), chromeMat, 0, base + 0.12, L / 2 + 0.02, body);
+  mesh(new THREE.BoxGeometry(W * 0.96, 0.1, 0.1), trimMat, 0, base + 0.12, -L / 2 - 0.02, body);
 
   // wheels: front pivots steer
   const wheels = [], steerPivots = [];

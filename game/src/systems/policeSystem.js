@@ -9,21 +9,38 @@ import { clamp, wrapAngle } from '../core/mathUtil.js';
 import { rng } from '../core/rng.js';
 import { softDotTexture } from '../render/textures.js';
 
+const UNIT_NAMES = ['MARLIN', 'HERON', 'TERN', 'PELICAN', 'CORAL', 'OSPREY', 'BARRACUDA', 'EGRET'];
+
 function createHelicopter(scene) {
   const g = new THREE.Group();
   const body = new THREE.MeshPhongMaterial({ color: 0x1a2a5a, shininess: 60 });
   const white = new THREE.MeshLambertMaterial({ color: 0xf2f2f2 });
   const glass = new THREE.MeshPhongMaterial({ color: 0x1d2a36, shininess: 90 });
+  const dark = new THREE.MeshLambertMaterial({ color: 0x23262d });
   const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
-  add(new THREE.BoxGeometry(2.2, 2, 4.2), body, 0, 0, 0);
-  add(new THREE.BoxGeometry(2.0, 1.4, 1.6), glass, 0, 0.1, 2.4);
-  add(new THREE.BoxGeometry(0.5, 0.5, 5.5), white, 0, 0.3, -4.6);
-  add(new THREE.BoxGeometry(0.15, 1.6, 0.9), body, 0, 0.9, -7.1);
-  add(new THREE.BoxGeometry(0.15, 0.3, 4), white, 1.0, -1.3, 0.2);
-  add(new THREE.BoxGeometry(0.15, 0.3, 4), white, -1.0, -1.3, 0.2);
-  const rotor = add(new THREE.BoxGeometry(11, 0.08, 0.4), white, 0, 1.25, 0);
-  const rotor2 = add(new THREE.BoxGeometry(0.4, 0.08, 11), white, 0, 1.25, 0);
-  const tail = add(new THREE.BoxGeometry(0.08, 1.8, 0.2), white, 0.25, 0.9, -7.1);
+  // rounded fuselage: navy lower hull, white upper, a bubble canopy at the nose
+  add(new THREE.SphereGeometry(1, 20, 14), body, 0, 0, 0.2).scale.set(1.15, 1.05, 2.3);
+  add(new THREE.SphereGeometry(1, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.5), white, 0, 0.12, -0.1).scale.set(1.1, 0.95, 2.0);
+  add(new THREE.SphereGeometry(1, 18, 12), glass, 0, 0.15, 1.35).scale.set(0.98, 0.85, 1.15);
+  // tapered tail boom, fin and tail rotor
+  const boom = new THREE.CylinderGeometry(0.16, 0.42, 5.6, 10); boom.rotateX(Math.PI / 2);
+  add(boom, white, 0, 0.35, -4.4);
+  add(new THREE.BoxGeometry(0.12, 1.5, 0.8), body, 0, 0.95, -7.0).rotation.x = -0.25;
+  add(new THREE.BoxGeometry(1.6, 0.08, 0.5), body, 0, 0.35, -6.6);
+  // skids on struts
+  const skid = new THREE.CylinderGeometry(0.07, 0.07, 3.8, 8); skid.rotateX(Math.PI / 2);
+  for (const sx of [1, -1]) {
+    add(skid, dark, sx * 0.95, -1.4, 0.2);
+    for (const sz of [1.0, -0.6]) add(new THREE.BoxGeometry(0.07, 0.6, 0.07), dark, sx * 0.85, -1.1, sz).rotation.z = sx * 0.25;
+  }
+  add(new THREE.CylinderGeometry(0.22, 0.3, 0.45, 10), dark, 0, 1.15, 0.1);
+  // main rotor: two thin blades plus a faint disc that reads as motion blur
+  const blade = new THREE.BoxGeometry(11.5, 0.05, 0.32);
+  const rotor = add(blade, dark, 0, 1.4, 0.1);
+  const rotor2 = add(blade, dark, 0, 1.4, 0.1); rotor2.rotation.y = Math.PI / 2;
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(5.8, 32), new THREE.MeshBasicMaterial({ color: 0x9aa4b2, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
+  disc.rotation.x = -Math.PI / 2; disc.position.set(0, 1.38, 0.1); g.add(disc);
+  const tail = add(new THREE.BoxGeometry(0.06, 1.5, 0.16), dark, 0.2, 0.9, -7.0);
   const beam = new THREE.Mesh(
     new THREE.ConeGeometry(6, 40, 20, 1, true),
     new THREE.MeshBasicMaterial({ color: 0xfff3c8, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
@@ -47,7 +64,38 @@ export class PoliceSystem {
     this.cars = [];
     this.officers = [];
     this.heli = createHelicopter(world.scene);
+    this.heli.callsign = 'GULL ONE';
     this.arrest = 0;
+    this.serial = 0;
+  }
+
+  /**
+   * What every unit is doing right now, nearest first, for the HUD's response panel:
+   * [{ callsign, kind: 'car'|'foot'|'air', status, dist }].
+   */
+  unitReport() {
+    const w = this.world, p = w.player.pos, col = w.collision, lvl = w.wanted.level;
+    const out = [];
+    for (const c of this.cars) {
+      if (c.dead || c.driver !== 'cop') continue;
+      const d = Math.hypot(c.pos.x - p.x, c.pos.z - p.z);
+      const sees = d < POLICE.sightRange && col.canSee(c.pos.x, c.pos.z, p.x, p.z, 1.2);
+      let status = 'EN ROUTE';
+      if (lvl === 0) status = 'PATROL';
+      else if (c.chase?.reverse > 0) status = 'RECOVERING';
+      else if (sees && d < 16) status = 'RAMMING';
+      else if (sees && d < 48) status = 'PURSUIT';
+      else if (sees) status = 'CLOSING IN';
+      out.push({ callsign: c.callsign, kind: 'car', status, dist: d });
+    }
+    for (const o of this.officers) {
+      if (o.dead) continue;
+      const d = Math.hypot(o.pos.x - p.x, o.pos.z - p.z);
+      out.push({ callsign: o.callsign, kind: 'foot', status: this.arrest > 0 && d < 3.2 ? 'ARRESTING' : o.aiming ? 'ENGAGING' : 'ON FOOT', dist: d });
+    }
+    const h = this.heli;
+    if (h.active && lvl >= 3) out.push({ callsign: h.callsign, kind: 'air', status: lvl >= 4 ? 'MARKSMAN' : 'SPOTLIGHT', dist: Math.hypot(h.pos.x - p.x, h.pos.z - p.z) });
+    return out.sort((a, b) => a.dist - b.dist);
   }
 
   officerNear(x, z, r) {
@@ -78,20 +126,28 @@ export class PoliceSystem {
     return this.addCar(node.x + 3, node.z + 3, Math.atan2(p.x - node.x, p.z - node.z));
   }
 
+  /** Radio callsign for the next unit: deterministic, so the same chase reads the same way. */
+  nextCallsign() {
+    const k = this.serial++;
+    return `${UNIT_NAMES[k % UNIT_NAMES.length]}-${12 + ((k * 37) % 79)}`;
+  }
+
   addCar(x, z, heading) {
     const v = new Vehicle('cruiser', 0xf5f5f5, x, z, heading);
     v.driver = 'cop';
     v.police = true;
     v.siren = true;
     v.crew = 2;
+    v.callsign = this.nextCallsign();
     v.chase = { node: null, stuck: 0, reverse: 0 };
     this.world.traffic.addVehicle(v);
     this.cars.push(v);
     return v;
   }
 
-  addOfficer(x, z) {
+  addOfficer(x, z, unit = null) {
     const o = new Npc(this.world.scene, 'cop', x, z);
+    o.callsign = unit ? `${unit.callsign}${unit.crew % 2 ? 'A' : 'B'}` : this.nextCallsign();
     this.officers.push(o);
     this.world.npcs.push(o);
     return o;
@@ -172,7 +228,7 @@ export class PoliceSystem {
       if (alive < POLICE.footPerLevel[lvl]) {
         c.crew--;
         const side = c.crew % 2 ? 1 : -1;
-        this.addOfficer(c.pos.x + Math.cos(c.heading) * 1.8 * side, c.pos.z - Math.sin(c.heading) * 1.8 * side);
+        this.addOfficer(c.pos.x + Math.cos(c.heading) * 1.8 * side, c.pos.z - Math.sin(c.heading) * 1.8 * side, c);
       }
     }
   }

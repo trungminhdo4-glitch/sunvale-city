@@ -12,22 +12,45 @@
 <p id="status" role="status" aria-live="polite"></p>
 
 <div id="hud" hidden>
-  <div id="hud-top-right">
-    <div id="hud-clock">17:30</div>
-    <div id="hud-weapon"><span id="weapon-icon"></span><span id="weapon-name"></span><span id="weapon-ammo"></span></div>
+  <section id="hud-mission" class="panel">
+    <header><span id="mis-num"></span><span id="mis-giver"></span></header>
+    <h3 id="mis-title"></h3>
+    <div id="mis-stage"><b></b><span class="segs"></span></div>
+    <p id="mis-text"></p>
+    <p id="mis-next"></p>
+    <div id="mis-timer"></div>
+  </section>
+  <section id="hud-police" class="panel">
+    <header><span>SVPD Response</span><b id="pol-count"></b></header>
+    <div id="pol-charge"></div>
+    <ol id="pol-units"></ol>
+    <div id="pol-sight"><span></span><i><b></b></i></div>
+  </section>
+  <section id="hud-status" class="panel">
+    <div class="status-top"><div id="hud-stars"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></div><div id="hud-clock">17:30</div></div>
     <div id="hud-money">$0</div>
-    <div id="hud-stars"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></div>
-  </div>
-  <div id="hud-objective"><div class="obj-title"></div><div class="obj-text"></div><div class="obj-timer"></div></div>
-  <div id="hud-minimap-wrap">
+    <div id="hud-rank"><div><b id="rank-name"></b><span id="rank-rp"></span></div><i><b></b></i></div>
+  </section>
+  <div id="hud-weapons"></div>
+  <div id="hud-rp"></div>
+  <div id="hud-left">
+    <div id="hud-place" class="panel"><b id="place-district"></b><span id="place-street"></span></div>
     <canvas id="minimap" width="220" height="220"></canvas>
-    <div id="bars"><div id="bar-health"><i></i></div><div id="bar-armor"><i></i></div></div>
+    <div id="bars">
+      <div id="bar-health"><span>Health</span><i><b></b></i><em></em></div>
+      <div id="bar-armor"><span>Armour</span><i><b></b></i><em></em></div>
+    </div>
   </div>
-  <div id="hud-vehicle"><div id="veh-name"></div><div id="veh-speed"><b>0</b> km/h</div><div id="radio-name"></div></div>
+  <section id="hud-vehicle" class="panel">
+    <div id="veh-speed"><b>0</b><span>km/h</span></div>
+    <div id="veh-name"></div><div id="veh-class"></div>
+    <div id="veh-cond"><span>Condition</span><i><b></b></i><em></em></div>
+    <div id="radio-name"></div>
+  </section>
+  <div id="hud-dialog" class="panel"><img id="dlg-face" alt=""><div><header><b id="dlg-name"></b><em id="dlg-role"></em></header><p id="dlg-text"></p></div></div>
   <div id="hud-district"></div>
   <div id="hud-prompt"></div>
   <div id="hud-notify"></div>
-  <div id="hud-subtitle"></div>
   <div id="hud-banner"><div class="title"></div><div class="sub"></div></div>
   <div id="crosshair"></div>
   <div id="vignette"></div>

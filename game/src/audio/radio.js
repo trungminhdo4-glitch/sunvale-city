@@ -1,8 +1,10 @@
 // In-car radio: two generative stations composed live with WebAudio (synthwave and beach lo-fi).
 
 const STATIONS = [
-  { name: 'Sunvale FM 98.4', host: 'Retro-wave for the boulevard', bpm: 104, chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], lead: [76, 74, 72, 69, 72, 74, 76, 79], wave: 'sawtooth' },
-  { name: 'Palm Radio 101.7', host: 'Low-tide beats', bpm: 82, chords: [[62, 65, 69, 72], [60, 64, 67, 71], [57, 60, 64, 67], [55, 59, 62, 65]], lead: [74, 0, 72, 69, 0, 67, 69, 0], wave: 'triangle' },
+  { name: 'Sunvale FM 98.4', host: 'Retro-wave for the boulevard', bpm: 104, chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], lead: [76, 74, 72, 69, 72, 74, 76, 79], wave: 'sawtooth',
+    tracks: ['Neon Undertow - Coastline Kiss', 'The Velvet Lanes - Shoreline 1986', 'Miri Solano - Heatwave Static', 'Palisade Club - Last Exit Sunvale'] },
+  { name: 'Palm Radio 101.7', host: 'Low-tide beats', bpm: 82, chords: [[62, 65, 69, 72], [60, 64, 67, 71], [57, 60, 64, 67], [55, 59, 62, 65]], lead: [74, 0, 72, 69, 0, 67, 69, 0], wave: 'triangle',
+    tracks: ['Low Tide Lou - Hammock Theory', 'Kelpie - Salt on the Speakers', 'Driftwood Hours - Gull Marina 3AM', 'Sol Kitamura - Pier Lights'] },
 ];
 
 const hz = (n) => 440 * Math.pow(2, (n - 69) / 12);
@@ -17,6 +19,11 @@ export class Radio {
   }
 
   get name() { return this.station < STATIONS.length ? STATIONS[this.station].name : 'Radio Off'; }
+  /** The song now playing: a new one every 64 bars. */
+  get track() {
+    const st = STATIONS[this.station];
+    return st ? st.tracks[Math.floor(this.step / 512) % st.tracks.length] : '';
+  }
 
   cycle() {
     this.station = (this.station + 1) % (STATIONS.length + 1);

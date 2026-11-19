@@ -18,6 +18,7 @@ export function writeSave(world) {
     armor: world.player.armor,
     pos: [world.player.pos.x, world.player.pos.z],
     hour: world.stage.hour,
+    progress: world.progress.save(),
   };
   try { localStorage.setItem(KEY, JSON.stringify(data)); return true; } catch { return false; }
 }
@@ -37,4 +38,5 @@ export function applySave(world, data) {
   world.player.armor = data.armor ?? 0;
   if (data.pos) world.player.placeAt(data.pos[0], data.pos[1]);
   if (data.hour != null) world.stage.setHour(data.hour);
+  world.progress.load(data.progress);
 }

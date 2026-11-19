@@ -4,7 +4,7 @@
 //   node serve.ts --port 8093            (in another shell)
 //   node tools/capture-shots.mjs --base http://localhost:8093 --profile <dir outside the repo>
 //
-// Each shot is a real render of game/ at 1280x720, saved as JPEG under screenshots/ and kept
+// Each shot is a real render of game/ at 1280x800 (16:10, the shape of the judge's cover cell), saved as JPEG under screenshots/ and kept
 // under the 256 KiB limit by lowering the JPEG quality when needed.
 
 import { spawn } from 'node:child_process';
@@ -66,7 +66,7 @@ async function main() {
   const shots = JSON.parse(readFileSync(join(root, 'shots.json'), 'utf8'));
   const proc = spawn(browser, [
     '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
-    '--window-size=1280,720', '--hide-scrollbars', '--mute-audio', '--no-first-run',
+    '--window-size=1280,800', '--hide-scrollbars', '--mute-audio', '--no-first-run',
     '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', 'about:blank',
   ], { stdio: 'ignore' });
   try {
@@ -74,7 +74,7 @@ async function main() {
     await cdp.ready;
     await cdp.send('Page.enable');
     await cdp.send('Runtime.enable');
-    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
     mkdirSync(join(root, 'screenshots'), { recursive: true });
     for (const shot of shots) {
       if (only && shot.name !== only) continue;

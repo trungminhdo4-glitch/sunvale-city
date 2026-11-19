@@ -28,11 +28,18 @@ procedural three.js and synthesised WebAudio: no downloaded art, no network requ
 - **Story**: eight missions with their own characters (Mama Lu, Dex Ortega, Rosa Vance, Juno Park,
   Silas Crane): car theft, timed pickups, a container-yard shootout, a three-star escape,
   a checkpoint street race, a coastal takedown and the finale at Crane Tower.
-- **Progress**: money, weapon unlocks, 24 hidden Sun Tokens, health and armour pickups, stats,
-  and saving to localStorage.
-- **Feel**: HUD with rotating minimap, stars, weapon and ammo, objective and timer, speedometer,
-  district names, dialogue subtitles and mission banners; title and pause menus with city map;
-  synthesised engine, siren, guns and two generative radio stations.
+- **Contacts and dispatch**: each contact phones in when their job opens and calls in mid-mission;
+  the SVPD radio narrates the chase live (new stars, your car, street and heading, the helicopter
+  joining, lost visual, code 4), with painted portraits for every speaker.
+- **Progress**: respect points for jobs, thefts, escapes (more per star), fights and tokens; seven
+  ranks from Nobody to Legend of Sunvale, each raising mission payouts and the armour cap. Money,
+  weapon unlocks, 24 hidden Sun Tokens, health and armour pickups, stats, saving to localStorage.
+- **Feel**: a HUD that shows the game at a glance: mission card with stage bar and next step (or the
+  next job, its distance and pay), the SVPD response panel (every unit's callsign, what it is doing
+  and how far, the charge, in sight or searching), stars, money, clock and rank bar, a weapon bar
+  with ammo, district and street name over the rotating radar, health and armour, the car's speed,
+  class, condition and the radio song playing; title and pause menus with city map; synthesised
+  engine, siren, guns, radio blips and two generative radio stations.
 
 ## Controls
 
@@ -55,9 +62,11 @@ renders the scenes listed in `shots.json` (`game/?shot=chase|street|race|shootou
 
 `game/src/` holds one job per file: `core/` (config, input, rng, math), `render/` (stage and
 lighting, sky, ocean, textures, geometry merge), `world/` (city plan, builder, landmarks,
-vegetation, collision, lane graph), `actors/` (player, NPCs, humanoid and vehicle models, vehicle
-physics), `systems/` (traffic, pedestrians, wanted, police, combat, missions, pickups), `data/`
-(story, weapons), `fx/`, `audio/`, `ui/` and `game/` (game loop, camera, saves, screenshot scenes).
+vegetation, collision, lane graph, street names), `actors/` (player, NPCs, humanoid and vehicle
+models, vehicle physics), `systems/` (traffic, pedestrians, wanted, police, dispatch radio, combat,
+missions, pickups, progression), `data/` (story, weapons), `fx/`, `audio/`, `ui/` (HUD, police
+panel, portraits, weapon icons, minimap, menus) and `game/` (game loop, camera, saves, screenshot
+scenes). Screenshots are 1280x800 renders of the staged scenes.
 three.js is vendored under `game/vendor/` with its MIT licence.
 
 ---

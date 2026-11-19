@@ -10,6 +10,7 @@ export class MissionSystem {
   constructor(world) {
     this.world = world;
     this.completed = new Set();
+    this.called = new Set();   // jobs whose contact has already phoned
     this.active = null;
     this.step = null;
     this.stepIndex = 0;
@@ -42,8 +43,46 @@ export class MissionSystem {
   }
 
   get objective() {
-    if (!this.active) return null;
-    return { title: this.active.title, text: this.stepText(), timer: this.step?.time ? Math.max(0, this.step.time - this.timer) : null };
+    if (!this.active) return this.idleObjective();
+    const m = this.active, nextStep = m.steps[this.stepIndex + 1];
+    return {
+      title: m.title,
+      text: this.stepText(),
+      timer: this.step?.time ? Math.max(0, this.step.time - this.timer) : null,
+      number: MISSIONS.indexOf(m) + 1,
+      total: MISSIONS.length,
+      giver: CHARACTERS[m.giver].name,
+      stage: Math.min(this.stepIndex + 1, m.steps.length),
+      stages: m.steps.length,
+      stepProgress: this.stepProgress(),
+      next: nextStep ? nextStep.text.replace(/~/g, '') : 'Collect the payout',
+    };
+  }
+
+  /** Between missions the card points at the next job: who, where and how far. */
+  idleObjective() {
+    const m = this.next;
+    if (!m) return null;
+    const p = this.placeOf(m.place), pl = this.world.player.pos;
+    const dist = Math.hypot(p.x - pl.x, p.z - pl.z);
+    return {
+      idle: true, title: m.title, number: MISSIONS.indexOf(m) + 1, total: MISSIONS.length,
+      giver: CHARACTERS[m.giver].name, stage: 0, stages: m.steps.length, stepProgress: 0,
+      text: `Meet ~${CHARACTERS[m.giver].name}~ at ${p.label ?? 'the yellow marker'}.`,
+      next: `${Math.round(dist)} m · pays $${Math.round(m.reward * (this.world.progress?.payoutBonus ?? 1) / 10) * 10}`,
+      timer: null,
+    };
+  }
+
+  /** 0..1 progress inside the current step, for the HUD's stage bar. */
+  stepProgress() {
+    const s = this.step, e = this.entities;
+    if (!s) return 0;
+    if (s.type === 'collect' && e.points.length) return e.points.filter((p) => p.done).length / e.points.length;
+    if (s.type === 'eliminate' && e.thugs.length) return e.thugs.filter((t) => t.dead).length / e.thugs.length;
+    if (s.type === 'wreck' && e.target) return 1 - Math.max(0, e.target.health) / (e.target.spec.health * 3.5);
+    if (s.type === 'evade') return this.world.wanted.level === 0 ? 1 : Math.min(1, this.world.wanted.evade / this.world.wanted.evadeNeeded);
+    return 0;
   }
 
   stepText() {
@@ -79,6 +118,7 @@ export class MissionSystem {
     this.step = this.active.steps[this.stepIndex] ?? null;
     if (!this.step) { this.pass(); return; }
     const s = this.step, w = this.world, e = this.entities;
+    if (s.say) this.say(s.say);
     if (s.type === 'getIn') {
       const sp = s.spawn;
       const v = new Vehicle(sp.model, sp.color, sp.x, sp.z, sp.heading);
@@ -157,9 +197,11 @@ export class MissionSystem {
   pass() {
     const w = this.world, m = this.active;
     this.completed.add(m.id);
-    w.state.money += m.reward;
+    const pay = Math.round(m.reward * (w.progress?.payoutBonus ?? 1) / 10) * 10;
+    w.state.money += pay;
+    w.progress?.earn('mission', 1, m.reward / 8);
     if (m.unlock) w.combat.give(m.unlock[0], m.unlock[1]);
-    w.hud.banner('MISSION PASSED', 'passed', `+$${m.reward.toLocaleString('en-US')}`);
+    w.hud.banner('MISSION PASSED', 'passed', `+$${pay.toLocaleString('en-US')}`);
     w.audio?.missionPassed();
     this.say(m.outro);
     this.cleanupAll();
@@ -188,6 +230,8 @@ export class MissionSystem {
       const m = this.next;
       if (!m) return;
       if (this.giverFor !== m) {
+        // the contact phones in once when their job opens up
+        if (m.call && !this.called.has(m.id)) { this.called.add(m.id); this.say([[m.giver, `📞 ${m.call}`]]); }
         this.clearGiver();
         const p = this.placeOf(m.place);
         this.giverBeacon = createBeacon(w.scene, 0xffd23f, 2.2);
@@ -266,9 +310,9 @@ export class MissionSystem {
     this.lineTime -= dt;
     if (this.lineTime <= 0 && this.lines.length) {
       const [who, text] = this.lines.shift();
-      this.world.hud.subtitle(CHARACTERS[who].name, CHARACTERS[who].color, text);
       this.lineTime = 2.2 + text.length * 0.045;
-    } else if (this.lineTime <= 0) this.world.hud.subtitle(null);
+      this.world.hud.say(who, text, this.lineTime, 'story');
+    }
   }
 
   /** Thugs left over in eliminate steps count as Crane's men for crimes. */
