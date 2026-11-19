@@ -1,18 +1,18 @@
-// A working gta6-01 entry (Node 22, standard library only): the game is this directory's
-// game/ folder, plain static files a desktop browser loads offline (game/index.html and its ES
-// modules, no library and no network request), and the program hands it in. It copies game/ and
-// screenshots/ from beside this file to /output and writes /output/dossier.json, the summary the
-// judge reads, with the vendored make.fun library. Only the plumbing, not an open world: Block
-// Dodger, a plain 2D canvas game where a paddle dodges falling blocks and catches coins, with a
-// title screen, score, lives and levels, game over and restart, flat colours and no sound. Build
-// your own open-world crime game in its place (three.js or any library you vendor under game/),
-// put your 3 or 4 PNG or JPEG screenshots in screenshots/ (the first by name is the cover) and run it.
+// Sunvale: Heat Rises, the gta6-01 entry (Node 22, standard library only).
+// The game is game/: an original open-world crime game on a sun-soaked coast, built with three.js
+// (vendored as game/vendor/*.min.js), plain static files that a desktop browser loads offline.
+// Six districts, traffic and pedestrians, eight drivable car models, a five-star wanted level with
+// cruisers, officers and a helicopter, four weapons, an eight-mission story, collectibles, a HUD
+// with minimap, title and pause menus and localStorage saves; every sound is synthesised live.
+// This program hands it in: it copies game/ and screenshots/ to /output and writes
+// /output/dossier.json, the summary the judge reads, with the vendored make.fun library.
+// Screenshots are real renders captured by tools/capture-shots.mjs from the scenes in shots.json.
 //
 // Serve it locally with `node serve.ts`, then open http://localhost:8080.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -20,10 +20,16 @@ import { buildDossier } from './vendor/makefun-game.ts';
 const here = fileURLToPath(new URL('.', import.meta.url));
 const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
+// Fail loudly here rather than at the gate: Sunvale ships 3 or 4 JPEG/PNG screenshots, the cover first.
+const shots = existsSync(join(here, 'screenshots'))
+  ? readdirSync(join(here, 'screenshots')).filter((f) => !f.startsWith('.') && /\.(jpe?g|png)$/i.test(f)).sort()
+  : [];
+if (shots.length < 3 || shots.length > 4) throw new Error(`screenshots/ must hold 3 or 4 images, found ${shots.length}`);
+
 mkdirSync(out, { recursive: true });
 cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
 mkdirSync(join(out, 'screenshots'), { recursive: true });
-if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+for (const f of shots) cpSync(join(here, 'screenshots', f), join(out, 'screenshots', f));
 
 // The scorer's own caps (reference/gate.json): only text_max_bytes shapes the bytes; the others refuse an entry the
 // scorer would refuse (more than 4 screenshots or one over 256 KiB; more than 993 files in game/ or 48 MiB of game

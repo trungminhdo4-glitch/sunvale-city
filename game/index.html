@@ -3,17 +3,81 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Block Dodger</title>
-<style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
-  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  /* Read aloud, never shown: the status line screen readers announce. */
-  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-</style>
+<title>Sunvale: Heat Rises</title>
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
 </head>
 <body>
-<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
+<canvas id="game" aria-label="Sunvale: Heat Rises, an open-world crime game"></canvas>
 <p id="status" role="status" aria-live="polite"></p>
+
+<div id="hud" hidden>
+  <div id="hud-top-right">
+    <div id="hud-clock">17:30</div>
+    <div id="hud-weapon"><span id="weapon-icon"></span><span id="weapon-name"></span><span id="weapon-ammo"></span></div>
+    <div id="hud-money">$0</div>
+    <div id="hud-stars"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></div>
+  </div>
+  <div id="hud-objective"><div class="obj-title"></div><div class="obj-text"></div><div class="obj-timer"></div></div>
+  <div id="hud-minimap-wrap">
+    <canvas id="minimap" width="220" height="220"></canvas>
+    <div id="bars"><div id="bar-health"><i></i></div><div id="bar-armor"><i></i></div></div>
+  </div>
+  <div id="hud-vehicle"><div id="veh-name"></div><div id="veh-speed"><b>0</b> km/h</div><div id="radio-name"></div></div>
+  <div id="hud-district"></div>
+  <div id="hud-prompt"></div>
+  <div id="hud-notify"></div>
+  <div id="hud-subtitle"></div>
+  <div id="hud-banner"><div class="title"></div><div class="sub"></div></div>
+  <div id="crosshair"></div>
+  <div id="vignette"></div>
+</div>
+
+<div id="title-screen" hidden>
+  <div class="title-sun"></div>
+  <div class="title-box">
+    <h1><span>SUNVALE</span><em>Heat Rises</em></h1>
+    <p class="tagline">One coast. Six districts. One man who owns the police.</p>
+    <nav>
+      <button id="btn-new">New Game</button>
+      <button id="btn-continue">Continue</button>
+      <button id="btn-controls">Controls</button>
+    </nav>
+    <div id="title-controls">
+      <p><kbd>W A S D</kbd> move / drive · <kbd>Mouse</kbd> look · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump / handbrake</p>
+      <p><kbd>F</kbd> enter, exit or steal a car · <kbd>LMB</kbd> fire · <kbd>RMB</kbd> aim · <kbd>1-4</kbd> / wheel weapons</p>
+      <p><kbd>Q</kbd> radio · <kbd>H</kbd> horn · <kbd>M</kbd> map · <kbd>Esc</kbd> pause and save</p>
+    </div>
+  </div>
+  <footer>An original open-world game. Made with three.js.</footer>
+</div>
+
+<div id="pause-menu" hidden>
+  <header><h2>SUNVALE <em>Paused</em></h2>
+    <div id="pause-tabs"><button data-tab="map">Map</button><button data-tab="story">Story</button><button data-tab="stats">Stats</button><button data-tab="controls">Controls</button></div>
+  </header>
+  <section id="page-map" class="pause-page"><canvas id="full-map" width="620" height="620"></canvas>
+    <aside id="map-aside"></aside>
+    <ul class="legend"><li><b class="dot y"></b>Mission</li><li><b class="sq">H</b>Kai's flat</li><li><b class="sq">+</b>Hospital</li><li><b class="sq">P</b>Police</li></ul>
+  </section>
+  <section id="page-story" class="pause-page" hidden><h3>Heat Rises</h3><ol id="story-list"></ol></section>
+  <section id="page-stats" class="pause-page" hidden><table id="stats-table"></table></section>
+  <section id="page-controls" class="pause-page" hidden>
+    <table class="keys">
+      <tr><td>Move / drive</td><td><kbd>W A S D</kbd></td></tr>
+      <tr><td>Look / steer camera</td><td><kbd>Mouse</kbd></td></tr>
+      <tr><td>Sprint / jump</td><td><kbd>Shift</kbd> <kbd>Space</kbd></td></tr>
+      <tr><td>Handbrake drift</td><td><kbd>Space</kbd></td></tr>
+      <tr><td>Enter / exit / steal car</td><td><kbd>F</kbd></td></tr>
+      <tr><td>Aim / fire</td><td><kbd>RMB</kbd> <kbd>LMB</kbd></td></tr>
+      <tr><td>Weapons</td><td><kbd>1-4</kbd> <kbd>Wheel</kbd></td></tr>
+      <tr><td>Radio / horn</td><td><kbd>Q</kbd> <kbd>H</kbd></td></tr>
+      <tr><td>Map / pause</td><td><kbd>M</kbd> <kbd>Esc</kbd></td></tr>
+    </table>
+  </section>
+  <footer><button id="btn-resume">Resume</button><button id="btn-save">Save Game</button><button id="btn-quit">Save &amp; Quit</button><span id="save-note"></span></footer>
+</div>
+
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

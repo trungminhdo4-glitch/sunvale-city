@@ -1,2 +1,5 @@
+# Sunvale build outputs and local scratch (never part of the entry)
 kit.tar.gz
 out/
+node_modules/
+*.log

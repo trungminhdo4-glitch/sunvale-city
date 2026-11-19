@@ -1,5 +1,6 @@
 [
-  { "name": "1-start.jpg", "query": "?shot=start&seed=1" },
-  { "name": "2-play.jpg", "query": "?shot=play&seed=1" },
-  { "name": "3-end.jpg", "query": "?shot=end&seed=1" }
+  { "name": "1-sunset-chase.jpg", "query": "?shot=chase&seed=4" },
+  { "name": "2-old-mission-carjack.jpg", "query": "?shot=street&seed=5" },
+  { "name": "3-coastline-race.jpg", "query": "?shot=race&seed=3" },
+  { "name": "4-harbour-shootout.jpg", "query": "?shot=shootout&seed=2" }
 ]
