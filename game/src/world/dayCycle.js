@@ -5,9 +5,9 @@ import { clamp } from '../core/mathUtil.js';
 
 // Colour keys at 15:00, 17:30 and 19:30.
 const KEYS = [
-  { h: 15.0, el: 40, sun: '#fff0d2', si: 3.1, top: '#3c8ee6', hor: '#ffe2b5', hemiS: '#cfe3ff', hemiG: '#c7a07a', hi: 1.15, fog: '#f3d6b4', exp: 0.95 },
-  { h: 17.5, el: 17, sun: '#ffc27a', si: 2.9, top: '#4a7fd1', hor: '#ffb98a', hemiS: '#ffd9b8', hemiG: '#a8746a', hi: 1.0, fog: '#f1b98f', exp: 1.0 },
-  { h: 19.5, el: 2, sun: '#ff7a3d', si: 1.7, top: '#3d3a8a', hor: '#ff8a6b', hemiS: '#e9a7a0', hemiG: '#5b3f5a', hi: 0.75, fog: '#d9897a', exp: 1.08 },
+  { h: 15.0, el: 40, sun: '#fff0d2', si: 3.0, top: '#2f7fe0', hor: '#ffdcae', hemiS: '#cfe3ff', hemiG: '#b8916a', hi: 1.05, fog: '#e9d3b8', exp: 0.92 },
+  { h: 17.5, el: 17, sun: '#ffbf70', si: 3.0, top: '#2e66c9', hor: '#ffb27a', hemiS: '#ffd6b0', hemiG: '#9a6a5e', hi: 0.95, fog: '#eab48e', exp: 0.95 },
+  { h: 19.5, el: 2, sun: '#ff6a2a', si: 1.8, top: '#2f2c7a', hor: '#ff7a55', hemiS: '#e19a96', hemiG: '#523a55', hi: 0.7, fog: '#cf7e70', exp: 1.05 },
 ];
 
 export class DayCycle {
@@ -24,7 +24,7 @@ export class DayCycle {
     scene.add(this.sun, this.sun.target);
     this.hemi = new THREE.HemisphereLight(0xffffff, 0x886644, 1);
     scene.add(this.hemi);
-    this.fog = new THREE.Fog(0xffffff, 180, 900);
+    this.fog = new THREE.Fog(0xffffff, 280, 1350);
     scene.fog = this.fog;
     this.state = { sunDir: new THREE.Vector3(), sunColor: new THREE.Color(), skyTop: new THREE.Color(), skyHorizon: new THREE.Color() };
     this.c1 = new THREE.Color(); this.c2 = new THREE.Color();

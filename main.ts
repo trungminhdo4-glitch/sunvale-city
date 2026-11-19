@@ -17,6 +17,11 @@ import { buildDossier } from './vendor/makefun-game.ts';
 const here = fileURLToPath(new URL('.', import.meta.url));
 const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
+// Fail loudly instead of handing in a half game: the page, the vendored engine and the entry module must exist.
+for (const required of ['game/index.html', 'game/vendor/three.module.min.js', 'game/src/main.js']) {
+  if (!existsSync(join(here, required))) throw new Error(`Sunvale: missing ${required}`);
+}
+
 mkdirSync(out, { recursive: true });
 cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
 mkdirSync(join(out, 'screenshots'), { recursive: true });

@@ -43,6 +43,7 @@ async function simulate(game, frames, each = null) {
   for (let i = 0; i < frames; i++) {
     if (each) each(i);
     game.step(SIM_DT);
+    if (i === frames - 1) game.hud.money = game.money;
     game.render(SIM_DT, i === frames - 1);
   }
 }
@@ -67,7 +68,8 @@ const SCENES = {
     game.wanted.setStars(3);
     void steps;
     car.controller = new StraightDriver(-316.5, 29);
-    const cops = [[-316.5, z0 + 13], [-323.2, z0 + 21], [-316.8, z0 + 34]].map(([x, z]) => {
+    game.arsenal.give('kestrel', 42);
+    const cops = [[-316.5, z0 + 9], [-322.6, z0 + 15], [-316.8, z0 + 26]].map(([x, z]) => {
       const v = game.traffic.spawnAt('cruiser', x, z, Math.PI);
       v.isTraffic = false; v.controller = new PoliceDriver(); v.driver.role = 'cop'; v.sirenOn = true; v.vz = -27;
       return v;
@@ -79,7 +81,8 @@ const SCENES = {
     game.radio.index = 0;
     await simulate(game, 50, () => { game.police.spawnT = 99; for (const c of cops) c.blink += 0; });
     const p = car.pos;
-    frameCamera(game, [p.x + 6.2, 2.1, p.z - 11.5], [p.x - 2.2, 1.6, p.z + 9], 62);
+    heli.pos.set(p.x - 7, 15, p.z + 34); heli.vel.set(0, 0, -25); heli.yaw = Math.PI;
+    frameCamera(game, [p.x - 5.6, 1.7, p.z - 10.5], [p.x + 1.6, 2.6, p.z + 12], 62);
     game.camCtl.yaw = Math.PI;
     await simulate(game, 1);
     await settle();
@@ -93,20 +96,24 @@ const SCENES = {
     game.arsenal.give('hornet', 180);
     game.arsenal.current = 'hornet';
     const c = LOCATIONS.mangoPlaza;
-    game.placePlayer(c.x + 1.5, c.z + 22, Math.PI);
+    game.placePlayer(c.x + 7, c.z + 23.5, Math.PI);
     for (let k = 0; k < 9; k++) game.peds.spawnAt(c.x - 20 + k * 5, c.z - 22 + (k % 3) * 20);
     const goons = game.characters.filter((x) => x.role === 'thug');
-    goons[1].pos.set(c.x + 9, 0.15, c.z + 2);
-    goons[0].pos.set(c.x - 12, 0.15, c.z - 6);
+    goons[1].pos.set(c.x + 4.5, 0.15, c.z + 9);
+    goons[0].pos.set(c.x - 5, 0.15, c.z + 5);
+    goons[2].pos.set(c.x + 13, 0.15, c.z - 1);
     goons[3].damage(500, game.player, 'bullet');
     game.dialogue.play([['mari', 'Those are Calloway\'s collectors. Run them off my plaza, Rio!']]);
     const p = game.player;
     const target = goons[1];
+    const fwd = Math.atan2(target.pos.x - p.pos.x, target.pos.z - p.pos.z);
+    const sx = Math.sin(fwd), sz = Math.cos(fwd), rx = -sz, rz = sx;
+    frameCamera(game, [p.pos.x - sx * 4.6 + rx * 1.25, p.pos.y + 2.25, p.pos.z - sz * 4.6 + rz * 1.25], [target.pos.x - rx * 2, 1.4, target.pos.z - rz * 2], 60);
     await simulate(game, 70, (i) => {
       const yaw = Math.atan2(target.pos.x - p.pos.x, target.pos.z - p.pos.z) - 0.04;
       p.yaw = yaw; p.mode = 'aim'; p.weapon = WEAPONS.hornet;
       game.camCtl.yaw = yaw + 0.05; game.camCtl.pitch = 0.08; game.camCtl.aiming = true;
-      if (i % 5 === 0 && i > 40) {
+      if ((69 - i) % 5 === 0 && i > 40) {
         const m = new THREE.Vector3(p.pos.x + Math.sin(yaw) * 0.55 - Math.cos(yaw) * 0.26, p.pos.y + 1.42, p.pos.z + Math.cos(yaw) * 0.55 + Math.sin(yaw) * 0.26);
         const d = new THREE.Vector3(target.pos.x - m.x, target.pos.y + 1.3 - m.y, target.pos.z - m.z).normalize();
         game.combat.fire(p, m, d, WEAPONS.hornet, { spreadMul: 0.6 });
@@ -129,12 +136,15 @@ const SCENES = {
     vans[0].pos.set(-60.5, 0, -60.5);
     for (let k = 0; k < 7; k++) game.traffic.spawnNear(3, 90, 15, 120);
     game.wanted.setStars(2);
+    game.arsenal.give('breaker', 16);
+    const cop = game.traffic.spawnAt('cruiser', -3.5, 88, 0);
+    cop.isTraffic = false; cop.controller = new PoliceDriver(); cop.driver.role = 'cop'; cop.sirenOn = true;
     let blown = false;
     await simulate(game, 80, (i) => {
       if (i === 62 && !blown) { blown = true; vans[1].lastAttacker = game.player; vans[1].explode(); }
     });
     const p = car.pos;
-    frameCamera(game, [p.x + 7, 15, p.z + 20], [p.x - 2, 4, p.z - 55], 64);
+    frameCamera(game, [p.x - 2.5, 8.5, p.z + 15], [p.x - 2, 2.5, p.z - 45], 64);
     await simulate(game, 1);
     await settle();
   },

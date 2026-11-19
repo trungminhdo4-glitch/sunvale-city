@@ -57,7 +57,7 @@ export class PoliceHelicopter {
     // one shared searchlight lives in the police system so the light count (and every shader) never changes
     this.light = game.police.claimSearchlight(this);
     const coneGeo = new THREE.ConeGeometry(7, 1, 24, 1, true); coneGeo.translate(0, -0.5, 0);
-    this.cone = new THREE.Mesh(coneGeo, new THREE.MeshBasicMaterial({ color: 0xfff1c4, transparent: true, opacity: 0.11, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    this.cone = new THREE.Mesh(coneGeo, new THREE.MeshBasicMaterial({ color: 0xfff1c4, transparent: true, opacity: 0.06, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
     game.scene.add(this.cone);
     this.spot = new THREE.Vector3(p.x, 0, p.z);
   }

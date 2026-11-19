@@ -143,9 +143,9 @@ export class FxSystem {
     if (v.burnTime > 0) for (let k = 0; k < 3; k++) this.add.spawn(x + rng.range(-0.5, 0.5), y, z + rng.range(-0.5, 0.5), rng.range(-0.3, 0.3), rng.range(1.5, 3.5), rng.range(-0.3, 0.3), rng.range(0.35, 0.7), 1.3, 0.4, FIRE0, FIRE1, 1, -1, 1);
   }
   explosion(x, y, z) {
-    for (let k = 0; k < 70; k++) {
+    for (let k = 0; k < 95; k++) {
       const a = rng.range(0, Math.PI * 2), e = rng.range(-0.2, 1), s = rng.range(4, 16);
-      this.add.spawn(x, y, z, Math.cos(a) * s * Math.cos(e), Math.sin(e) * s + 2, Math.sin(a) * s * Math.cos(e), rng.range(0.4, 0.9), rng.range(2.5, 4), 0.6, FIRE0, FIRE1, 1, 2, 2.5);
+      this.add.spawn(x, y, z, Math.cos(a) * s * Math.cos(e), Math.sin(e) * s + 2, Math.sin(a) * s * Math.cos(e), rng.range(0.5, 1.1), rng.range(3.5, 6), 0.8, FIRE0, FIRE1, 1, 2, 2.5);
     }
     for (let k = 0; k < 40; k++) {
       const a = rng.range(0, Math.PI * 2), s = rng.range(1, 6);

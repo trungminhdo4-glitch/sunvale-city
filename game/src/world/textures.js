@@ -153,7 +153,7 @@ const BUILDERS = {
   },
   sidewalk() {
     const rng = new Rng(20); const [c, g] = makeCanvas(256, 256);
-    g.fillStyle = '#d6cfc2'; g.fillRect(0, 0, 256, 256);
+    g.fillStyle = '#c4bcae'; g.fillRect(0, 0, 256, 256);
     speckle(g, 256, 256, rng, 3000, 'rgba(255,255,255,.2)', 'rgba(0,0,0,.08)');
     g.fillStyle = 'rgba(90,80,70,.22)';
     for (let k = 0; k < 256; k += 64) { g.fillRect(k, 0, 2, 256); g.fillRect(0, k, 256, 2); }
@@ -161,7 +161,7 @@ const BUILDERS = {
   },
   sand() {
     const rng = new Rng(21); const [c, g] = makeCanvas(256, 256);
-    g.fillStyle = '#ecd6a6'; g.fillRect(0, 0, 256, 256);
+    g.fillStyle = '#d9bc85'; g.fillRect(0, 0, 256, 256);
     speckle(g, 256, 256, rng, 9000, 'rgba(255,250,235,.35)', 'rgba(150,110,60,.15)');
     g.strokeStyle = 'rgba(170,130,80,.12)'; g.lineWidth = 3;
     for (let y = 10; y < 256; y += 22) { g.beginPath(); for (let x = 0; x <= 256; x += 16) g.lineTo(x, y + Math.sin(x * 0.05 + y) * 4); g.stroke(); }
