@@ -1,104 +1,19 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sunvale: Heat Rises</title>
-  <link rel="stylesheet" href="./style.css">
-  <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Block Dodger</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  /* Read aloud, never shown: the status line screen readers announce. */
+  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+</style>
 </head>
 <body>
-  <div id="app">
-    <canvas id="view"></canvas>
-
-    <div id="hud" class="hidden">
-      <div id="hud-topright">
-        <div id="hud-clock">16:00</div>
-        <div id="hud-money">$0</div>
-        <div id="wanted-stars"></div>
-        <div id="hud-weapon"><span id="weapon-name">Fists</span><span id="weapon-ammo"></span></div>
-      </div>
-      <div id="mission-panel" class="hidden">
-        <div id="mission-title"></div>
-        <div id="mission-objective"></div>
-        <div id="mission-timer" class="hidden"></div>
-      </div>
-      <div id="hud-hint" class="hidden"></div>
-      <div id="notify-stack"></div>
-      <div id="minimap-wrap">
-        <canvas id="minimap" width="232" height="232"></canvas>
-        <div id="vital-bars">
-          <div class="bar health"><div id="health-fill"></div></div>
-          <div class="bar armor"><div id="armor-fill"></div></div>
-        </div>
-      </div>
-      <div id="location-panel"><div id="district-name"></div><div id="street-name"></div></div>
-      <div id="vehicle-panel" class="hidden">
-        <div id="vehicle-name"></div>
-        <div id="speedo"><span id="speed-value">0</span><small>km/h</small></div>
-        <div id="radio-name"></div>
-      </div>
-      <div id="crosshair" class="hidden"><i></i><i></i><i></i><i></i></div>
-      <div id="hit-marker" class="hidden"></div>
-      <div id="arrest-bar" class="hidden"><span>HANDS UP</span><div id="arrest-fill"></div></div>
-      <div id="subtitle" class="hidden"><span id="subtitle-speaker"></span><span id="subtitle-text"></span></div>
-      <div id="banner" class="hidden"><div id="banner-title"></div><div id="banner-sub"></div></div>
-      <div id="damage-vignette"></div>
-    </div>
-
-    <div id="title-screen">
-      <div class="logo">
-        <div class="logo-sun"></div>
-        <div class="logo-main">SUNVALE</div>
-        <div class="logo-sub">HEAT RISES</div>
-      </div>
-      <div class="title-menu">
-        <button id="btn-new">New Game</button>
-        <button id="btn-continue">Continue</button>
-        <button id="btn-controls">Controls</button>
-      </div>
-      <div id="controls-card" class="hidden">
-        <h3>Controls</h3>
-        <div class="controls-grid">
-          <b>W A S D</b><span>Walk / drive</span>
-          <b>Mouse</b><span>Look around</span>
-          <b>Shift</b><span>Sprint</span>
-          <b>Space</b><span>Jump / handbrake</span>
-          <b>F</b><span>Enter, steal or leave a car</span>
-          <b>Right mouse</b><span>Aim</span>
-          <b>Left mouse</b><span>Shoot / punch</span>
-          <b>1-4 / wheel</b><span>Switch weapon</span>
-          <b>H</b><span>Horn</span>
-          <b>R</b><span>Next radio station</span>
-          <b>C</b><span>Look behind</span>
-          <b>Esc</b><span>Pause, map and save</span>
-        </div>
-        <button id="btn-controls-close">Back</button>
-      </div>
-      <div class="title-foot">An original open-world crime story on the Sunvale coast</div>
-    </div>
-
-    <div id="pause-menu" class="hidden">
-      <div class="pause-head"><span>SUNVALE</span> PAUSED</div>
-      <div class="pause-body">
-        <canvas id="pause-map" width="600" height="600"></canvas>
-        <div class="pause-side">
-          <h3>Story</h3>
-          <ol id="pause-missions"></ol>
-          <h3>Stats</h3>
-          <dl id="pause-stats"></dl>
-          <div class="pause-buttons">
-            <button id="btn-resume">Resume</button>
-            <button id="btn-save">Save Game</button>
-            <button id="btn-quit">Quit to Title</button>
-          </div>
-          <div id="save-status"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="fade"></div>
-  </div>
-  <script type="module" src="./src/main.js"></script>
+<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
+<p id="status" role="status" aria-live="polite"></p>
+<script type="module" src="./src/main.js"></script>
 </body>
 </html>

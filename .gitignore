@@ -1,14 +1,2 @@
-# Sunvale: Heat Rises — files that never belong in the entry
-# local hand-in output of `MAKEFUN_OUTPUT_DIR=out node main.ts`
-out/
-# the kit archive the starter came from
 kit.tar.gz
-# scratch from the screenshot capture script (Edge profile, temp frames)
-tools/.edge-profile/
-tools/.frames/
-# editor and OS noise
-.DS_Store
-Thumbs.db
-*.log
-node_modules/
-.env*
+out/
